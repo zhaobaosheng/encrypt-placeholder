@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+	
+<!-- 	<bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath*:test.properties</value>
+			</list>
+		</property>
+	</bean> -->
+	<bean id="aesUtil" class="com.zdawn.spring.placeholder.AESCipherUtil">
+         <!-- 16个非中文字符 -->
+        <property name="secretKey" value="1234567812345678"/>
+        <!-- 16个非中文字符 -->
+        <property name="ivParameter" value="asdfghjklzxcvbnm"/>
+    </bean>
+	<bean id="propertyConfigurer" class="com.zdawn.spring.placeholder.PropertyPlaceholderConfigurerExt">
+		<property name="locations">
+			<list>
+				<value>classpath*:test.properties</value>
+			</list>
+		</property>
+		<property name="encryptPropsKey">
+			<list>
+				<value>name</value>
+			</list>
+		</property>
+<!-- 		<property name="aesUtil" ref="aesUtil"/> -->
+	</bean>
+	<bean id="testBean" class="com.zdawn.spring.placeholder.TestBean">
+        <property name="name" value="${name}"/>
+    </bean>
+</beans>

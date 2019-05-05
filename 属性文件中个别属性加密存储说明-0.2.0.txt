@@ -1,0 +1,110 @@
+属性文件个别键值加密实现-依赖spring最低版本4.2.6.RELEASE
+
+1 pom增加依赖
+<dependency>
+  <groupId>com.zdawn</groupId>
+  <artifactId>encrypt-placeholder</artifactId>
+  <version>0.2.0</version>
+</dependency>
+
+2 属性文件的键值使用包中 AESCipherUtil类加密存储
+  例如使用默认对称密钥 java -cp encrypt-placeholder-0.2.0.jar com.zdawn.spring.placeholder.AESCipherUtil xxxx（待加密）
+  如果使用自定义密钥，代码如下：
+  try {
+        //自定义密钥
+	AESCipherUtil.initSecretKey("1234567812345678");
+	//自定义向量
+        AESCipherUtil.initIvParameter("asdfghjklzxcvbnm");
+	System.out.println(AESCipherUtil.encode("xxxx"));
+  } catch (Exception e) {
+	e.printStackTrace();
+  }
+
+
+spring传统配置
+  
+   1)使用默认密钥配置（order属性必须配置）
+	<bean id="propertyConfigurer" class="com.zdawn.spring.placeholder.PropertyPlaceholderConfigurerExt">
+		<property name="locations">
+			<list>
+				<value>classpath*:test.properties</value>
+			</list>
+		</property>
+		<property name="encryptPropsKey">
+			<list>
+				<value>name</value>
+			</list>
+		</property>
+		<property name="ignoreUnresolvablePlaceholders" value="true"/>
+		<property name="order" value="10" />
+	</bean>
+    2)使用自定义密钥
+    	<bean id="aesUtil" class="com.zdawn.spring.placeholder.AESCipherUtil">
+         <!-- 16个非中文字符 密钥 -->
+         <property name="secretKey" value="1234567812345678"/>
+         <!-- 16个非中文字符 向量 -->
+         <property name="ivParameter" value="asdfghjklzxcvbnm"/>
+        </bean>
+	<bean id="propertyConfigurer" class="com.zdawn.spring.placeholder.PropertyPlaceholderConfigurerExt">
+		<property name="locations">
+			<list>
+				<value>classpath*:test.properties</value>
+			</list>
+		</property>
+		<property name="encryptPropsKey">
+			<list>
+				<value>name</value>
+			</list>
+		</property>
+		<property name="ignoreUnresolvablePlaceholders" value="true"/>
+		<property name="order" value="10" />
+		<property name="aesUtil" ref="aesUtil"/>
+	</bean>
+     3)如果是spring boot项目 在入口类取消对上述属性文件的加载
+
+spring boot项目配置
+    属性文件中的键(key)以enc前缀开头的使用密文存储，如果改变enc前缀，需要配置。
+    1)取消使用@PropertySource注解加载配置文件
+      例如
+      //@PropertySources({
+      //        @PropertySource("classpath:frontcardws-config.properties")
+      // })
+    2)使用@Bean注解bean
+      例如
+    public class BootFrontCardwsApplication {
+	 @Bean
+	 public static PropertySourcesPlaceholderConfigurer propertyConfigure(){
+		PropertySourcesPlaceholderConfigurer propertyConfigure = new PropertySourcesPlaceholderConfigurer();
+                //加载属性文件名,可以多个
+		DecryptProperties properties = new DecryptProperties("frontcardws-config.properties");
+		propertyConfigure.setProperties(properties);
+		propertyConfigure.setIgnoreUnresolvablePlaceholders(true);
+		propertyConfigure.setOrder(10);
+		return propertyConfigure;
+	}
+    	public static void main(String[] args) {
+    		ConfigurableApplicationContext context = SpringApplication.run(BootFrontCardwsApplication.class, args);
+    		SpringHelper.setContext(context);
+    	}
+    }
+     
+    自定义键解密前缀
+    public class BootFrontCardwsApplication {
+	 @Bean
+	 public static PropertySourcesPlaceholderConfigurer propertyConfigure(){
+		PropertySourcesPlaceholderConfigurer propertyConfigure = new PropertySourcesPlaceholderConfigurer();
+                DecryptProperties properties = new DecryptProperties();
+		//设置自定义前缀,
+		properties.setKeyPrefix("xxxx");
+		//加载属性文件名,可以多个
+		properties.loadProperties("frontcardws-config.properties");
+		propertyConfigure.setProperties(properties);
+		propertyConfigure.setIgnoreUnresolvablePlaceholders(true);
+		propertyConfigure.setOrder(10);
+		return propertyConfigure;
+	}
+    	public static void main(String[] args) {
+    		ConfigurableApplicationContext context = SpringApplication.run(BootFrontCardwsApplication.class, args);
+    		SpringHelper.setContext(context);
+    	}
+    }
